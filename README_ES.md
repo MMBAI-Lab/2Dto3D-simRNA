@@ -109,19 +109,23 @@ cp ../../inputs/mi_corrida/sim_config.in      .
 
 ### Etapa 2 — Correr REMC (TREMD)
 
-TREMD canónico de 16 réplicas a partir de secuencia + restricciones 2D:
+Tres invocaciones cubren los casos típicos; **(A) es la que se usa con más frecuencia**.
+
+**(A) REMC desde secuencia + restricciones 2D — workflow principal (16 réplicas):**
 
 ```bash
 nohup SimRNA -s example -S example.str -c sim_config.in -E 16 -o example >& example.log &
 ```
 
-Alternativas:
+**(B) MC partiendo de un PDB + restricciones 2D (temperatura única):**
 
 ```bash
-# Partiendo de un PDB + restricciones 2D (MC a temperatura única):
 nohup SimRNA -p example.pdb -S example.str -c sim_config.in -o example >& example.log &
+```
 
-# REMC desde secuencia sin restricciones (20 réplicas):
+**(C) REMC desde secuencia, sin restricciones (20 réplicas):**
+
+```bash
 nohup SimRNA -s example -c sim_config.in -E 20 -o example >& example.log &
 ```
 
@@ -188,13 +192,15 @@ python /ruta/a/extract_all_pdbs.py /ruta/a/dir --name example --suffixes 01,02,0
 python /ruta/a/compare_ss.py example.str pdbs/
 ```
 
-### Etapa 7 — Inspeccionar las trayectorias en ChimeraX
+### Etapa 7 — Inspeccionar las trayectorias en ChimeraX o VMD
 
-Combinar los PDBs frame-a-frame en un PDB multi-modelo que ChimeraX abre como trayectoria:
+Combinar los PDBs frame-a-frame en un PDB multi-modelo que tanto ChimeraX como VMD abren como trayectoria:
 
 ```bash
 python multi-pdb.py --folder ./pdbs --output trajectory.pdb
 ```
+
+Abrilo en ChimeraX con `File > Open` (los modelos avanzan automáticamente), o en VMD con `vmd trajectory.pdb` (cada modelo se carga como un frame).
 
 ## Flujo diagnóstico (qué mirar)
 
@@ -214,8 +220,3 @@ python multi-pdb.py --folder ./pdbs --output trajectory.pdb
 - **Los symlinks `data` rotos** son la causa principal de que este pipeline se reinicie en silencio — revisalos primero cuando una corrida no arranca o crashea de inmediato.
 - **Los scripts Python de análisis downstream** (`extract_low_temp_frames.py`, `extract_major_clusters.py`, `Analyze_scorings.py`, `plot_scores_comparison.py`, `extract_all_pdbs.py`, `compare_ss.py`, `multi-pdb.py`) **todavía no están vendored en este repositorio** — viven en un árbol externo `simRNA/` y solo están referenciados por el protocolo documentado.
 
-## Referencias
-
-- **Manual de usuario de SimRNA v3.20** — viene con la distribución académica oficial como `SimRNA_UserManual_v3_20_20141002.pdf`.
-- **Licencia académica de SimRNA** — viene como `SimRNA_academic_license.pdf` en la misma distribución; leerla antes de usar.
-- **Reporte de método interno** (solo laboratorio, no está en este repo) — fuente de verdad para las decisiones de protocolo de arriba.

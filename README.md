@@ -109,19 +109,23 @@ cp ../../inputs/my_run/sim_config.in      .
 
 ### Stage 2 — Run REMC (TREMD)
 
-Canonical 16-replica TREMD from sequence + 2D restraints:
+Three invocations cover the typical cases; **(A) is the one used most often**.
+
+**(A) REMC from sequence + 2D restraints — primary workflow (16 replicas):**
 
 ```bash
 nohup SimRNA -s example -S example.str -c sim_config.in -E 16 -o example >& example.log &
 ```
 
-Alternatives:
+**(B) MC from a starting PDB + 2D restraints (single-temperature):**
 
 ```bash
-# From a starting PDB + 2D restraints (single-temperature MC):
 nohup SimRNA -p example.pdb -S example.str -c sim_config.in -o example >& example.log &
+```
 
-# REMC from sequence with no restraints (20 replicas):
+**(C) REMC from sequence, no restraints (20 replicas):**
+
+```bash
 nohup SimRNA -s example -c sim_config.in -E 20 -o example >& example.log &
 ```
 
@@ -188,13 +192,15 @@ python /path/to/extract_all_pdbs.py /path/to/dir --name example --suffixes 01,02
 python /path/to/compare_ss.py example.str pdbs/
 ```
 
-### Stage 7 — Inspect trajectories in ChimeraX
+### Stage 7 — Inspect trajectories in ChimeraX or VMD
 
-Combine per-frame PDBs into a multi-model PDB that ChimeraX opens as a trajectory:
+Combine per-frame PDBs into a multi-model PDB that both ChimeraX and VMD open as a trajectory:
 
 ```bash
 python multi-pdb.py --folder ./pdbs --output trajectory.pdb
 ```
+
+Open it in ChimeraX with `File > Open` (models step through automatically), or in VMD with `vmd trajectory.pdb` (each model becomes a frame).
 
 ## Diagnostic flow (what to look for)
 
@@ -214,8 +220,3 @@ python multi-pdb.py --folder ./pdbs --output trajectory.pdb
 - **Broken `data` symlinks** are the top cause of silent restarts of this pipeline — check them first when a run refuses to start or crashes immediately.
 - **The downstream Python analysis scripts** (`extract_low_temp_frames.py`, `extract_major_clusters.py`, `Analyze_scorings.py`, `plot_scores_comparison.py`, `extract_all_pdbs.py`, `compare_ss.py`, `multi-pdb.py`) are **not yet vendored in this repository** — they live in an external `simRNA/` helper tree and are referenced here by the documented protocol.
 
-## References
-
-- **SimRNA v3.20 user manual** — ships with the official SimRNA academic distribution as `SimRNA_UserManual_v3_20_20141002.pdf`.
-- **SimRNA academic license** — ships as `SimRNA_academic_license.pdf` in the same distribution; read it before use.
-- **Internal method report** (lab-only, not in this repo) — source of truth for the protocol choices above.
