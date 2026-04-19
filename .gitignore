@@ -1,0 +1,41 @@
+# Internal documentation (not redistributable)
+docs/
+
+# SimRNA academic distribution — must be downloaded from the official site,
+# not redistributed here. This includes the statistical-potential data/ dir.
+SimRNA_64bitIntel_Linux/
+
+# Runtime symlink to SimRNA's data directory (created per-run inside a run dir)
+data
+**/data
+
+# Run inputs: track ONLY the single reference example. Any other per-run
+# directory under inputs/ is local-only.
+inputs/*
+!inputs/example/
+!inputs/example/**
+
+# Run outputs: track ONLY the reference example's post-processed results,
+# and drop the bulky trajectory files from it.
+results/*
+!results/example/
+!results/example/**
+*.trafl
+
+# Generated run artifacts
+*.log
+*.ss_detected
+nohup.out
+core.*
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
