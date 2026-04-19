@@ -39,10 +39,7 @@ REMC sampling runs several replicas in parallel at different relative temperatur
 
 Only the single reference run under `inputs/example/` and `results/example/` is tracked. Any other directory you create under `inputs/` or `results/` is gitignored by default — use them freely for your own runs without polluting the repo. The heavy trajectory files (`*.trafl`) are excluded even for the reference example; the repo keeps only the light-weight post-processed outputs (scoring CSVs, centroid PDBs, plots).
 
-The following are **not** distributed from this repo and must be obtained separately before running the pipeline:
-
-- **SimRNA academic distribution** (binaries + `data/` statistical potentials) — license does not permit public redistribution. See [Installing SimRNA](#installing-simrna) below.
-- **Internal method report** — stays local to the lab.
+The **SimRNA academic distribution** (binaries + `data/` statistical potentials) is **not** distributed from this repo — the license does not permit public redistribution. Download it separately before running the pipeline; see [Installing SimRNA](#installing-simrna) below.
 
 ## Installing SimRNA
 

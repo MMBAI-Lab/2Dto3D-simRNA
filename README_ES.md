@@ -39,10 +39,7 @@ El muestreo REMC corre varias réplicas en paralelo a distintas temperaturas rel
 
 Solo la corrida de referencia bajo `inputs/example/` y `results/example/` está versionada. Cualquier otro directorio que crees dentro de `inputs/` o `results/` queda ignorado por git — podés usarlos libremente para tus propias corridas sin contaminar el repo. Los archivos de trayectoria pesados (`*.trafl`) se excluyen incluso para la corrida de referencia; el repo guarda solo los outputs post-procesados livianos (CSVs de scoring, PDBs de centroides, plots).
 
-Los siguientes recursos **no** se distribuyen desde este repo y hay que obtenerlos aparte antes de correr el pipeline:
-
-- **Distribución académica de SimRNA** (binarios + potenciales estadísticos `data/`) — la licencia no permite redistribución pública. Ver [Instalación de SimRNA](#instalación-de-simrna) más abajo.
-- **Reporte de método interno** — queda local al laboratorio.
+La **distribución académica de SimRNA** (binarios + potenciales estadísticos `data/`) **no** se distribuye desde este repo — la licencia no permite redistribución pública. Bajala aparte antes de correr el pipeline; ver [Instalación de SimRNA](#instalación-de-simrna) más abajo.
 
 ## Instalación de SimRNA
 
