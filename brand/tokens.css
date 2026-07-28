@@ -1,0 +1,65 @@
+/* DansLab brand tokens — import after fonts.css */
+:root {
+  /* Palette */
+  --dl-black: #000000;
+  --dl-ink: #0b0b0c;
+  --dl-graphite: #3a3b3f;
+  --dl-slate: #6b6d72;
+  --dl-ash: #9a9ca1;
+  --dl-mist: #d9dadd;
+  --dl-paper: #f7f6f4;
+  --dl-white: #ffffff;
+  --dl-red: #ce1b27;          /* single accent */
+  --dl-red-dark: #7d1015;     /* seals / hover / underline */
+  --dl-logo-red: #e5322e;     /* logo atom ONLY */
+
+  /* Semantic (light surface default) */
+  --dl-bg: var(--dl-white);
+  --dl-surface: var(--dl-paper);
+  --dl-text: var(--dl-ink);
+  --dl-text-muted: var(--dl-slate);
+  --dl-border: var(--dl-mist);
+  --dl-accent: var(--dl-red);
+
+  /* Type */
+  --dl-font-serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+  --dl-font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --dl-font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* Type scale (deck reference, 1920×1080 — scale down for web/UI) */
+  --dl-type-display: 84px;
+  --dl-type-title: 64px;
+  --dl-type-subtitle: 44px;
+  --dl-type-body: 34px;
+  --dl-type-caption: 24px;
+  --dl-tracking-kicker: 0.2em;
+
+  /* Grid & structure */
+  --dl-grid: 60px;
+  --dl-grid-line-dark: rgba(255, 255, 255, 0.12);
+  --dl-grid-line-light: rgba(0, 0, 0, 0.04);
+  --dl-radius: 0;             /* corners are square */
+}
+
+/* Dark surface: apply .dl-dark on a wrapper to flip semantic tokens */
+.dl-dark {
+  --dl-bg: var(--dl-black);
+  --dl-surface: var(--dl-black);
+  --dl-text: var(--dl-white);
+  --dl-text-muted: var(--dl-ash);
+  --dl-border: #26272b;
+}
+
+/* Utility: the background grid */
+.dl-grid-light {
+  background-image:
+    linear-gradient(var(--dl-grid-line-light) 1px, transparent 1px),
+    linear-gradient(90deg, var(--dl-grid-line-light) 1px, transparent 1px);
+  background-size: var(--dl-grid) var(--dl-grid);
+}
+.dl-grid-dark {
+  background-image:
+    linear-gradient(var(--dl-grid-line-dark) 1px, transparent 1px),
+    linear-gradient(90deg, var(--dl-grid-line-dark) 1px, transparent 1px);
+  background-size: var(--dl-grid) var(--dl-grid);
+}

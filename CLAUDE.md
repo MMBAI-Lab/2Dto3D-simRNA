@@ -10,6 +10,8 @@ This is **not** a SimRNA source tree. It is a workspace for running SimRNA (Gene
 
 - [README.md](README.md) / [README_ES.md](README_ES.md) — parallel EN/ES user docs for the pipeline.
 - [inputs/example/](inputs/example/) and [results/example/](results/example/) — a single reference run (inputs + post-processed outputs, no `.trafl`). Everything else under `inputs/` and `results/` is gitignored.
+- [brand/](brand/) — DansLab (MMBAI) visual identity: tokens, logos, guide. Vendored copy of [MMBAI-Lab/branding-danslab](https://github.com/MMBAI-Lab/branding-danslab) (private), same revision `75b141f` as the sibling `../2D-NAprediction` repo.
+- [scripts/](scripts/) — pipeline drivers and report builders (see [Reports](#reports) below).
 
 **Present on the local filesystem but gitignored:**
 
@@ -46,11 +48,37 @@ A minimal `sim_config.in` ships with the SimRNA distribution (`config.dat` / `co
 
 The method report references a suite of Python scripts — `extract_low_temp_frames.py`, `extract_major_clusters.py`, `Analyze_scorings.py`, `plot_scores_comparison.py`, `extract_all_pdbs.py`, `compare_ss.py`, `multi-pdb.py` — that parse REMC logs, score 2D agreement, and build multi-model PDBs for ChimeraX. **None of them are checked in here.** If a task requires one, ask the user where the `simRNA/` helper tree lives before assuming paths. The docx shows invocation patterns but not the implementations.
 
+## Reports
+
+Every report under `results/` is a **bilingual pair** carrying the DansLab brand header. Never produce a single-language or unbranded report.
+
+- **Naming**: `<BASE>_EN.md` + `<BASE>_ES.md`. Per-run substate summaries use `BASE=README`, cross-run analyses use `BASE=REPORT`. There is no plain `README.md` / `REPORT.md` under `results/` — that naming was retired.
+- **Generated reports**: [scripts/build_cluster_readme.py](scripts/build_cluster_readme.py) writes `results/<run>/README_{EN,ES}.md`; [scripts/build_global_readme.py](scripts/build_global_readme.py) writes `results/<aptamer>/REPORT_{EN,ES}.md`. Both loop over `LANGS` and pull every user-facing string from a per-language `T` / branch. **Adding a sentence means adding it in both languages in the same edit** — the builders are the enforcement point, so a monolingual string added there propagates the defect to every future run.
+- **Never hand-edit a generated report.** It is overwritten on the next build. Change the builder and re-run it.
+- **Brand furniture**: [scripts/report_brand.py](scripts/report_brand.py) owns the header (logo raster, `DANSLAB · MMBAI` kicker, EN/ES switch) and footer. It computes the logo path relative to the report's own directory, so it works at any depth. Hand-written reports (e.g. `results/APT-PF1/global_analysis/PDBtoMD/README_{EN,ES}.md`) copy that block verbatim.
+- **Regenerating everything** after a builder change:
+  ```bash
+  for d in results/example results/APT-PF1/*/; do
+      [ -d "$d/rmsd_clusters" ] && python3 scripts/build_cluster_readme.py "$d" --name example
+  done
+  python3 scripts/build_global_readme.py
+  ```
+
+## Branding (DansLab / MMBAI)
+
+The group's visual identity lives in [brand/](brand/) — a vendored copy of `MMBAI-Lab/branding-danslab`, see [brand/README.md](brand/README.md). It applies to everything this repo publishes.
+
+- **Do not invent colors, fonts or spacing.** Use the tokens in [brand/tokens.json](brand/tokens.json) / [brand/tokens.css](brand/tokens.css); the full rules are in [brand/BRAND-GUIDE.md](brand/BRAND-GUIDE.md).
+- Palette: black `#000`, ink `#0B0B0C`, graphite/ash/mist neutrals, paper `#F7F6F4`, red `#CE1B27` as the **single** accent (kickers, rules, numbers). The logo's atom red `#E5322E` is used nowhere else.
+- Type: IBM Plex Serif (titles) · IBM Plex Sans (body) · IBM Plex Mono (labels, data, code).
+- Square corners, no shadows, no emoji unless explicitly requested.
+- The brand repo is **private**. If `brand/` needs refreshing, follow the recipe in [brand/README.md](brand/README.md) — it requires the user's GitHub access, so ask rather than guessing at asset contents.
+
 ## Conventions worth knowing before editing
 
 - Temperatures are on a **relative** scale (T≈1 is standard). "Around T=1" in the protocol means REMC levels 2–4 when using the documented 16-level 0.9–1.65 ladder — the indices, not the temperatures, are what the analysis scripts key on.
 - Broken `data` symlinks are the single most common failure mode for these binaries. If a simulation dies at startup, check the symlink before anything else.
 - SS restraint weight (`SECOND_STRC_RESTRAINTS_WEIGHT`) is the main knob being tuned; the docx describes the too-low / too-high diagnostic signatures. Don't change it without reading that section.
-- **Bilingual READMEs must stay in sync.** [README.md](README.md) (English) and [README_ES.md](README_ES.md) (Spanish) are parallel translations of the same content. Any edit to one must be mirrored in the other in the same change — never update only one language. If the user requests a change in one language, produce both edits in parallel.
+- **Bilingual docs must stay in sync.** [README.md](README.md) (English) and [README_ES.md](README_ES.md) (Spanish) are parallel translations of the same content, and so is every `_EN` / `_ES` report pair under `results/`. Any edit to one must be mirrored in the other in the same change — never update only one language. If the user requests a change in one language, produce both edits in parallel.
 - **Do not git-add `SimRNA_64bitIntel_Linux/` or `docs/`.** Both are in `.gitignore` and must stay that way — the SimRNA distribution has a non-redistribution license, and `docs/` is lab-internal. If `git status` ever shows those paths as untracked or modified, something broke in `.gitignore`.
 - **Reference run is at `inputs/example/` + `results/example/` only.** Any other per-run directory under those is ignored by design; do not add whitelist rules for new ones. `*.trafl` is excluded everywhere — the repo stores post-processed outputs only.

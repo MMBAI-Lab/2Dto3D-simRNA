@@ -32,6 +32,8 @@ REMC sampling runs several replicas in parallel at different relative temperatur
 │   └── example/               # reference run inputs (tracked)
 ├── results/
 │   └── example/               # reference run post-processed results (tracked, no .trafl)
+├── brand/                     # DansLab (MMBAI) visual identity — tokens, logos, guide
+├── scripts/                   # pipeline drivers and report builders
 ├── CLAUDE.md                  # notes for Claude Code sessions on this repo
 ├── README.md                  # this file
 └── README_ES.md               # Spanish version
@@ -201,6 +203,19 @@ python multi-pdb.py --folder ./pdbs --output trajectory.pdb
 ```
 
 Open it in ChimeraX with `File > Open` (models step through automatically), or in VMD with `vmd trajectory.pdb` (each model becomes a frame).
+
+## Reports
+
+Every report this pipeline publishes under `results/` ships as a **bilingual pair** — `<BASE>_EN.md` and `<BASE>_ES.md` — carrying the **DansLab (MMBAI)** brand header: logo, organisation kicker, and a language switch between the two files. There is no single-language report.
+
+| Report | Written by | Location |
+|---|---|---|
+| Per-run substate populations | `scripts/build_cluster_readme.py` | `results/<run>/README_{EN,ES}.md` |
+| Cross-run global analysis | `scripts/build_global_readme.py` | `results/<aptamer>/REPORT_{EN,ES}.md` |
+
+Both builders take their header and footer from [`scripts/report_brand.py`](scripts/report_brand.py), which reads the vendored brand system in [`brand/`](brand/) (a copy of [MMBAI-Lab/branding-danslab](https://github.com/MMBAI-Lab/branding-danslab)). Restyling every report is a change to those two files — never to the generated Markdown, which is overwritten on the next build. Hand-written reports (for example `results/APT-PF1/global_analysis/PDBtoMD/README_{EN,ES}.md`) copy the same header block verbatim.
+
+Read [`brand/BRAND-GUIDE.md`](brand/BRAND-GUIDE.md) before changing colors, type, or layout: black/graphite/ash neutrals, red `#CE1B27` as the single accent, IBM Plex type, square corners, no emoji.
 
 ## Diagnostic flow (what to look for)
 

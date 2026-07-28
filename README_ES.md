@@ -32,6 +32,8 @@ El muestreo REMC corre varias réplicas en paralelo a distintas temperaturas rel
 │   └── example/               # inputs de la corrida de referencia (versionado)
 ├── results/
 │   └── example/               # resultados post-procesados de la corrida de referencia (versionado, sin .trafl)
+├── brand/                     # identidad visual DansLab (MMBAI) — tokens, logos, guía
+├── scripts/                   # drivers del pipeline y builders de reportes
 ├── CLAUDE.md                  # notas para sesiones de Claude Code sobre este repo
 ├── README.md                  # versión en inglés
 └── README_ES.md               # este archivo
@@ -201,6 +203,19 @@ python multi-pdb.py --folder ./pdbs --output trajectory.pdb
 ```
 
 Abrilo en ChimeraX con `File > Open` (los modelos avanzan automáticamente), o en VMD con `vmd trajectory.pdb` (cada modelo se carga como un frame).
+
+## Reportes
+
+Todo reporte que este pipeline publica bajo `results/` se emite como **par bilingüe** — `<BASE>_EN.md` y `<BASE>_ES.md` — con el encabezado de marca **DansLab (MMBAI)**: logo, kicker de la organización y el switch de idioma entre ambos archivos. No hay reportes en un solo idioma.
+
+| Reporte | Generado por | Ubicación |
+|---|---|---|
+| Poblaciones de subestados por run | `scripts/build_cluster_readme.py` | `results/<run>/README_{EN,ES}.md` |
+| Análisis global cruzado entre runs | `scripts/build_global_readme.py` | `results/<aptámero>/REPORT_{EN,ES}.md` |
+
+Ambos builders toman su encabezado y pie de [`scripts/report_brand.py`](scripts/report_brand.py), que lee el sistema de marca vendorizado en [`brand/`](brand/) (copia de [MMBAI-Lab/branding-danslab](https://github.com/MMBAI-Lab/branding-danslab)). Reestilizar todos los reportes es un cambio en esos dos archivos — nunca en el Markdown generado, que se sobrescribe en el próximo build. Los reportes escritos a mano (por ejemplo `results/APT-PF1/global_analysis/PDBtoMD/README_{EN,ES}.md`) copian el mismo bloque de encabezado tal cual.
+
+Leer [`brand/BRAND-GUIDE.md`](brand/BRAND-GUIDE.md) antes de tocar colores, tipografía o layout: neutros negro/graphite/ash, rojo `#CE1B27` como único acento, tipografía IBM Plex, esquinas rectas, sin emoji.
 
 ## Flujo diagnóstico (qué mirar)
 

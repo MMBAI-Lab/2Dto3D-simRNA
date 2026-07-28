@@ -22,6 +22,12 @@ results/*
 !results/example/**
 *.trafl
 
+# Re-assert the data-symlink exclusion: the results/example/** negation above
+# would otherwise re-include the per-run `data` symlinks, which point at an
+# absolute local path inside the (non-redistributable) SimRNA distribution.
+results/example/**/data
+results/example/data
+
 # Generated run artifacts
 *.log
 *.ss_detected
