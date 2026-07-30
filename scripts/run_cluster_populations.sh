@@ -21,7 +21,10 @@ SIMRNA_DIR="$REPO/SimRNA_64bitIntel_Linux"
 PKG="$REPO/scripts/simRNA-scripts/scripts"
 export PATH="$SIMRNA_DIR:$PATH"
 
-CUTOFFS=(8 12 16)
+# RMSD clustering cutoffs in Å. Override for short aptamers, where 8 Å already
+# collapses the whole pool into one cluster and resolves nothing:
+#   CUTOFFS="2 3 4 5 6" scripts/run_cluster_populations.sh <run_dir>
+read -ra CUTOFFS <<< "${CUTOFFS:-8 12 16}"
 LOW_T_MIN=2
 LOW_T_MAX=4
 CLUST_FRACTION=1.0
@@ -45,16 +48,24 @@ fi
 # 2) RMSD clustering at 4 cutoffs
 RMSD_DIR=rmsd_clusters
 mkdir -p "$RMSD_DIR"
-if [ ! -s "$RMSD_DIR/clustering.log" ]; then
-    echo "--- RMSD clustering: cutoffs ${CUTOFFS[*]} Å, fraction $CLUST_FRACTION"
+# Only cluster the cutoffs that have no output yet, so adding a cutoff to an
+# already-processed run is cheap and does not redo the others.
+MISSING=()
+for c in "${CUTOFFS[@]}"; do
+    if ! compgen -G "$RMSD_DIR/low_temp_thrs$(printf '%.2f' "$c")A_clust*.trafl" >/dev/null; then
+        MISSING+=("$c")
+    fi
+done
+if [ "${#MISSING[@]}" -gt 0 ]; then
+    echo "--- RMSD clustering: cutoffs ${MISSING[*]} Å, fraction $CLUST_FRACTION"
     (
         cd "$RMSD_DIR"
         ln -sfn "$SIMRNA_DIR/data" data
         ln -sfn "../low_temp.trafl" low_temp.trafl
-        clustering low_temp.trafl "$CLUST_FRACTION" "${CUTOFFS[@]}" > clustering.log 2>&1
+        clustering low_temp.trafl "$CLUST_FRACTION" "${MISSING[@]}" >> clustering.log 2>&1
     )
 else
-    echo "--- rmsd_clusters/clustering.log already present, skipping clustering"
+    echo "--- all requested cutoffs (${CUTOFFS[*]} Å) already clustered, skipping"
 fi
 
 # 3) SS-pattern clustering: rebuild per-frame .ss_detected via SimRNA_trafl2pdbs

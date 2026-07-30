@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
-For each APT-PF1 run × cutoff × top-N cluster, extract the centroid frame as
-an all-atom PDB (back-mapped by `SimRNA_trafl2pdbs`), also save its detected
-`.ss_detected`, and render a PNG snapshot.
+For each run × cutoff × top-N cluster of a result set, extract the centroid
+frame as an all-atom PDB (back-mapped by `SimRNA_trafl2pdbs`), also save its
+detected `.ss_detected`, and render a PNG snapshot.
 
-Layout written under <global_root>/<run>/cutoff_<N>A/:
+Defaults to the APT-PF1 set; pass `--set <name>` for any other, e.g.
+
+    python3 scripts/extract_global_centroids.py --set comercialApt
+
+Layout written under results/<set>/global_analysis/<run>/cutoff_<N>A/:
   clustNN.pdb          — AA centroid (frame 1 of cluster .trafl)
   clustNN.ss_detected  — detected dot-bracket
   clustNN.png          — rendered backbone trace
@@ -157,20 +161,40 @@ def process_run(
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--repo", type=Path, default=Path("/home/pdans/Documents/2Dto3D-simRNA"))
+    ap.add_argument("--repo", type=Path, default=Path(__file__).resolve().parent.parent)
+    ap.add_argument("--set", dest="set_name", default="APT-PF1",
+                    help="Result set under results/ (default: APT-PF1)")
+    ap.add_argument("--runs", nargs="*", default=None,
+                    help="Run directory names to process. Default: every subdirectory of "
+                         "results/<set>/ that has a rmsd_clusters/ directory.")
     ap.add_argument("--top-n", type=int, default=10)
     ap.add_argument("--name", default="example")
     args = ap.parse_args()
 
     simrna_dir = args.repo / "SimRNA_64bitIntel_Linux"
     render_script = args.repo / "scripts" / "render_pdb_png.py"
-    apt_root = args.repo / "results" / "APT-PF1"
-    global_dir = apt_root / "global_analysis"
-    global_dir.mkdir(parents=True, exist_ok=True)
+    set_root = args.repo / "results" / args.set_name
+    global_dir = set_root / "global_analysis"
 
-    runs = ["DNA_as_RNA_VFold2D", "DNA_as_RNA_NUPACK4", "NA_as_DNA_NUPACK4"]
+    if not set_root.is_dir():
+        print(f"no such result set: {set_root}", file=sys.stderr)
+        return 1
+
+    if args.runs:
+        runs = list(args.runs)
+    else:
+        runs = sorted(
+            p.name for p in set_root.iterdir()
+            if p.is_dir() and (p / "rmsd_clusters").is_dir()
+        )
+    if not runs:
+        print(f"no runs with rmsd_clusters/ found under {set_root}", file=sys.stderr)
+        return 1
+
+    global_dir.mkdir(parents=True, exist_ok=True)
+    print(f"set '{args.set_name}': {len(runs)} run(s) -> {', '.join(runs)}")
     for r in runs:
-        process_run(apt_root / r, global_dir, simrna_dir, render_script, args.name, args.top_n)
+        process_run(set_root / r, global_dir, simrna_dir, render_script, args.name, args.top_n)
 
     print(f"\nCentroids written under {global_dir}")
     return 0
