@@ -28,6 +28,12 @@ results/*
 results/example/**/data
 results/example/data
 
+# Branded DOCX renders of the Markdown reports. Regenerable at any time with
+# `python3 scripts/build_report.py`, and the styling is derived from
+# brand/tokens.json rather than a committed template — so the binaries are
+# build output, not source.
+*.docx
+
 # Generated run artifacts
 *.log
 *.ss_detected

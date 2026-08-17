@@ -52,7 +52,10 @@ mkdir -p "$RMSD_DIR"
 # already-processed run is cheap and does not redo the others.
 MISSING=()
 for c in "${CUTOFFS[@]}"; do
-    if ! compgen -G "$RMSD_DIR/low_temp_thrs$(printf '%.2f' "$c")A_clust*.trafl" >/dev/null; then
+    # LC_ALL=C: the `clustering` binary always writes a dot decimal separator,
+    # but bash's printf honours LC_NUMERIC (es_UY here → "12,00"), so without
+    # this the glob never matches and every re-run re-clusters from scratch.
+    if ! compgen -G "$RMSD_DIR/low_temp_thrs$(LC_ALL=C printf '%.2f' "$c")A_clust*.trafl" >/dev/null; then
         MISSING+=("$c")
     fi
 done
