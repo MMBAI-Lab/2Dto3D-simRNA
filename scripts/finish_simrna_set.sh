@@ -61,8 +61,16 @@ log "--- centroids returned $?"
 CHIMERAX_BIN="${CHIMERAX_BIN:-/home/pdans/chimerax/bin/chimerax-headless}"
 if [ -x "$CHIMERAX_BIN" ]; then
     log "--- rendering centroids with ChimeraX"
+    #    Anchor each aptamer group on the reference cutoff's dominant cluster.
+    #    Without this the anchor falls to the largest population, which always
+    #    lands on the coarsest cutoff -- a structure the report never mentions.
+    CX_REF=()
+    for rd in "$OUT_ROOT"/*/; do
+        [ -d "$rd/rmsd_clusters" ] || continue
+        CX_REF+=(--ref-cutoff "$(basename "$rd")=$REF_CUTOFF")
+    done
     python3 "$REPO/scripts/render_centroids_chimerax.py" --set "$SET_NAME" \
-        --chimerax "$CHIMERAX_BIN" >> "$LOG" 2>&1
+        --chimerax "$CHIMERAX_BIN" "${CX_REF[@]}" >> "$LOG" 2>&1
     log "--- ChimeraX render returned $?"
 elif python3 -c 'import numpy, matplotlib, Bio' >/dev/null 2>&1; then
     log "--- ChimeraX not at $CHIMERAX_BIN; rendering with the matplotlib tracer"
