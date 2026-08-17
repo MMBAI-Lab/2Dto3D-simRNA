@@ -43,17 +43,36 @@ log "--- post-processing runs (see _postprocess.log)"
 "$REPO/scripts/run_postprocess_set.sh" "$SET_NAME" "$BASE_NAME"
 log "--- post-processing returned $?"
 
-# 2) Optional: centroid PDB/PNG per run x cutoff x cluster. Needs the scientific
-#    stack; the set report treats these as optional, so a missing numpy must not
-#    take the reports down with it.
-if python3 -c 'import numpy, matplotlib, Bio' >/dev/null 2>&1; then
-    log "--- extracting global centroids"
+# 2) Centroid PDBs per run x cutoff x cluster, then their renders.
+#
+#    These are two separate concerns and used to be gated as one, which cost the
+#    whole ApF series its centroids: the guard tested numpy/matplotlib/biopython
+#    and skipped everything when they were missing. But back-mapping needs only
+#    SimRNA_trafl2pdbs -- no Python stack at all -- and the centroid PDBs are the
+#    input to the next stage (substate selection for MD), not decoration. So the
+#    extraction always runs, and only the drawing is conditional.
+log "--- extracting global centroids (PDBs; renders handled separately below)"
+python3 "$REPO/scripts/extract_global_centroids.py" --set "$SET_NAME" --no-render >> "$LOG" 2>&1
+log "--- centroids returned $?"
+
+#    Rendering, in order of preference. ChimeraX needs nothing from Python and
+#    aligns per aptamer with a shared camera, so it is the better output as well
+#    as the more available one; the matplotlib tracer is the fallback.
+CHIMERAX_BIN="${CHIMERAX_BIN:-/home/pdans/chimerax/bin/chimerax-headless}"
+if [ -x "$CHIMERAX_BIN" ]; then
+    log "--- rendering centroids with ChimeraX"
+    python3 "$REPO/scripts/render_centroids_chimerax.py" --set "$SET_NAME" \
+        --chimerax "$CHIMERAX_BIN" >> "$LOG" 2>&1
+    log "--- ChimeraX render returned $?"
+elif python3 -c 'import numpy, matplotlib, Bio' >/dev/null 2>&1; then
+    log "--- ChimeraX not at $CHIMERAX_BIN; rendering with the matplotlib tracer"
     python3 "$REPO/scripts/extract_global_centroids.py" --set "$SET_NAME" >> "$LOG" 2>&1
-    log "--- centroids returned $?"
+    log "--- matplotlib render returned $?"
 else
-    log "--- SKIP centroids: numpy/matplotlib/biopython not importable by $(command -v python3)."
-    log "    Reports are unaffected (centroid PNGs are optional). To add them later:"
-    log "    pip install --user numpy matplotlib biopython && python3 scripts/extract_global_centroids.py --set $SET_NAME"
+    log "--- SKIP renders: no ChimeraX at $CHIMERAX_BIN, and numpy/matplotlib/biopython"
+    log "    are not importable by $(command -v python3). The centroid PDBs are still"
+    log "    in place and the reports are unaffected -- only the gallery is empty."
+    log "    To add it later:  python3 scripts/render_centroids_chimerax.py --set $SET_NAME"
 fi
 
 # 3) Set-level cross-run report, bilingual pair + DOCX.

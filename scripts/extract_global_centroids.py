@@ -71,8 +71,15 @@ def backmap_frame1(
     render_script: Path,
     png_path: Path,
     title: str,
+    render: bool = True,
 ) -> None:
-    """Run SimRNA_trafl2pdbs (AA) for frame 1 in a tempdir, move outputs, render PNG."""
+    """Run SimRNA_trafl2pdbs (AA) for frame 1 in a tempdir, move outputs, render PNG.
+
+    Back-mapping needs only the SimRNA binary. Rendering needs numpy/matplotlib/
+    biopython, which is why it is separable: `render=False` still produces every
+    centroid PDB, and scripts/render_centroids_chimerax.py can draw them later
+    with no Python dependencies at all.
+    """
     env = os.environ.copy()
     env["PATH"] = f"{simrna_dir}:{env.get('PATH', '')}"
     with tempfile.TemporaryDirectory(prefix="trafl2pdbs_") as td:
@@ -105,6 +112,9 @@ def backmap_frame1(
         if produced_ss:
             shutil.copy(produced_ss[0], out_ss)
 
+    if not render:
+        return
+
     # Render PNG
     render_proc = subprocess.run(
         [sys.executable, str(render_script), str(out_pdb), str(png_path), "--title", title],
@@ -121,6 +131,7 @@ def process_run(
     render_script: Path,
     name: str,
     top_n: int,
+    render: bool = True,
 ) -> None:
     rmsd_dir = run_dir / "rmsd_clusters"
     ref_pdb = run_dir / f"{name}_01-000001.pdb"
@@ -148,9 +159,10 @@ def process_run(
                 print(f"[{run_dir.name}] cutoff={cutoff:.0f}Å rank={rank} clust={cid:02d} ({count} frames, {pct:.2f}%)")
                 if not pdb_out.exists():
                     backmap_frame1(
-                        ref_pdb, trafl, pdb_out, ss_out, simrna_dir, render_script, png_out, title,
+                        ref_pdb, trafl, pdb_out, ss_out, simrna_dir, render_script, png_out,
+                        title, render,
                     )
-                elif not png_out.exists():
+                elif render and not png_out.exists():
                     subprocess.run(
                         [sys.executable, str(render_script), str(pdb_out), str(png_out), "--title", title],
                         check=False,
@@ -169,6 +181,10 @@ def main() -> int:
                          "results/<set>/ that has a rmsd_clusters/ directory.")
     ap.add_argument("--top-n", type=int, default=10)
     ap.add_argument("--name", default="example")
+    ap.add_argument("--no-render", action="store_true",
+                    help="Only back-map the centroid PDBs; skip the matplotlib PNG pass. "
+                         "Use when numpy/matplotlib/biopython are unavailable, or when "
+                         "render_centroids_chimerax.py will draw them instead.")
     args = ap.parse_args()
 
     simrna_dir = args.repo / "SimRNA_64bitIntel_Linux"
@@ -194,7 +210,8 @@ def main() -> int:
     global_dir.mkdir(parents=True, exist_ok=True)
     print(f"set '{args.set_name}': {len(runs)} run(s) -> {', '.join(runs)}")
     for r in runs:
-        process_run(set_root / r, global_dir, simrna_dir, render_script, args.name, args.top_n)
+        process_run(set_root / r, global_dir, simrna_dir, render_script, args.name,
+                    args.top_n, render=not args.no_render)
 
     print(f"\nCentroids written under {global_dir}")
     return 0
