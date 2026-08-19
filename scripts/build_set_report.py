@@ -100,6 +100,18 @@ T = {
                 "and the per-run `README_{{EN,ES}}.md` are versioned; trajectories and cluster data are gitignored._",
         "yes": "yes", "no": "no",
         "v_ok": "resolves", "v_sat": "saturated", "v_frag": "fragmented",
+        "md": "## Structures selected for molecular dynamics",
+        "md_text": "The substates below are the starting points for the next stage: **explicit-solvent "
+                   "molecular dynamics** with AMBER. AMBER-ready PDBs and a starter `tleap.in` are in "
+                   "[`global_analysis/PDBtoMD/`](global_analysis/PDBtoMD) — see its "
+                   "[README](global_analysis/PDBtoMD/README_EN.md) for the conversion details.",
+        "md_hdr": "| structure | aptamer | substate | population |",
+        "md_mixed": "The selection deliberately mixes two kinds of substate. An **RMSD** entry represents "
+                    "a 3D cluster of structurally similar frames. A **2D pattern** entry is the "
+                    "lowest-energy frame carrying one exact dot-bracket — it represents the base-pairing, "
+                    "not a conformational cluster. 2D-pattern substates were taken where RMSD clustering "
+                    "does not resolve the aptamer: on the shortest chains one cluster absorbs nearly the "
+                    "whole pool, so what varies is the base-pairing rather than the fold.",
         "per_run": "## Per-run detail",
         "per_run_line": "- [`{run}` →]({run}/README_EN.md) — full RMSD and 2D-pattern clustering, all cutoffs.",
     },
@@ -156,6 +168,20 @@ T = {
                 "REPORTs y los `README_{{EN,ES}}.md` por run; trayectorias y datos de clustering están gitignored._",
         "yes": "sí", "no": "no",
         "v_ok": "resuelve", "v_sat": "saturado", "v_frag": "fragmentado",
+        "md": "## Estructuras seleccionadas para dinámica molecular",
+        "md_text": "Los subestados de abajo son los puntos de partida de la etapa siguiente: **dinámica "
+                   "molecular en solvente explícito** con AMBER. Los PDBs listos para AMBER y un "
+                   "`tleap.in` de arranque están en "
+                   "[`global_analysis/PDBtoMD/`](global_analysis/PDBtoMD) — ver su "
+                   "[README](global_analysis/PDBtoMD/README_ES.md) para el detalle de la conversión.",
+        "md_hdr": "| estructura | aptámero | subestado | población |",
+        "md_mixed": "La selección mezcla deliberadamente dos tipos de subestado. Una entrada **RMSD** "
+                    "representa un cluster 3D de frames estructuralmente similares. Una entrada **patrón "
+                    "2D** es el frame de menor energía que porta un dot-bracket exacto — representa el "
+                    "apareamiento de bases, no un cluster conformacional. Se tomaron subestados de patrón "
+                    "2D donde el clustering RMSD no resuelve el aptámero: en las cadenas más cortas un "
+                    "cluster absorbe casi todo el pool, así que lo que varía es el apareamiento y no el "
+                    "plegamiento.",
         "per_run": "## Detalle por run",
         "per_run_line": "- [`{run}` →]({run}/README_ES.md) — clustering RMSD y por patrón 2D completo, todos los cutoffs.",
     },
@@ -412,6 +438,37 @@ def pair_sections(runs: list[Run], lang: str) -> list[str]:
     return lines
 
 
+def md_selection_section(runs: list[Run], set_root: Path, lang: str) -> list[str]:
+    """Read back what build_pdbtomd.py selected, so the two never disagree."""
+    t = T[lang]
+    readme = set_root / "global_analysis" / "PDBtoMD" / f"README_{lang.upper()}.md"
+    if not readme.exists():
+        return []
+    rows = []
+    for line in readme.read_text().splitlines():
+        if not line.startswith("| `") or ".pdb`" not in line:
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 5:
+            continue
+        rows.append(cells)
+    if not rows:
+        return []
+
+    by_name = {r.name: r for r in runs}
+    lines = [t["md"], "", t["md_text"], "", t["md_hdr"], "|:---|:---|:---|---:|"]
+    for c in rows:
+        fname = c[0].strip("`")
+        run = next((n for n in by_name if fname.startswith(n)), "")
+        apt = by_name[run].aptamer if run else ""
+        lines.append(f"| {c[0]} | **{apt}** | {c[1]} | {c[4]} |")
+    lines.append("")
+    if len({c[1] for c in rows}) > 1:
+        lines.append(t["md_mixed"])
+        lines.append("")
+    return lines
+
+
 def gallery_section(runs: list[Run], global_root: Path, set_name: str, lang: str,
                     report_dir: Path) -> list[str]:
     t = T[lang]
@@ -463,6 +520,7 @@ def build(set_name: str, runs: list[Run], set_root: Path, global_root: Path, lan
     parts += ss_pattern_section(runs, lang)
     parts += pair_sections(runs, lang)
     parts += gallery_section(runs, global_root, set_name, lang, set_root)
+    parts += md_selection_section(runs, set_root, lang)
     parts += [t["per_run"], ""]
     for r in runs:
         parts.append(t["per_run_line"].format(run=r.name))
